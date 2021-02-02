@@ -2,6 +2,7 @@ import React, { useState, useLayoutEffect, useEffect } from 'react'
 import { ScrollView } from 'react-native'
 import styled from 'styled-components/native';
 import { AntDesign } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 const Container = styled.View`
@@ -17,7 +18,7 @@ const RowContainer = styled.View`
 
 const RowText = styled.Text`
     font-size: 20px;
-    margin-left: 5;
+    margin-left: 5px;
 `;
 
 const NavButton = styled(AntDesign)`
@@ -27,13 +28,40 @@ const NavButton = styled(AntDesign)`
 `;
 
 export default function HomeScreen({ route, navigation }) {
-    
-    const [todos, setTodos] = useState(
-        Array(20)
-            .fill('')
-            .map((_, i) => (`Test ${i}`))
-    );
+    ;
+    const STORAGE_KEY = '@todo_key'
 
+    // const [todos, setTodos] = useState(
+    //     Array(20)
+    //         .fill('')
+    //         .map((_, i) => (`Test ${i}`))
+    // );
+    const [todos, setTodos] = useState([])
+
+    const storeData = async (value) => {
+        try {
+            const jsonValue = JSON.stringify(value)
+            await AsyncStorage.setItem(STORAGE_KEY, jsonValue)
+        } catch (e) {
+            console.log(e)
+        }
+    }
+
+    const getData = async () => {
+        try {
+            return AsyncStorage.getItem(STORAGE_KEY)
+                .then(reg => JSON.parse(reg))
+                .then(json => {
+                    if (json === null) {
+                        json = [];
+                    }
+                    setTodos(json)
+                })
+                .catch(error => console.log(error));
+        } catch (e) {
+            console.log(e)
+        }
+    }
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -52,10 +80,12 @@ export default function HomeScreen({ route, navigation }) {
 
     useEffect(() => {
         if (route.params?.todo) {
-            const NewTodos = [...todos,route.params?.todo];
-            setTodos(NewTodos)
+           const newKey = todos.length + 1;
+           const newTodo = {key: newKey.toString(), description: route.params.todo}
+           const newTodos = [...todos, newTodo];
+           storeData(newTodos)
         }
-
+        getData();
     }, [route.params?.todo])
 
 
@@ -65,9 +95,9 @@ export default function HomeScreen({ route, navigation }) {
         <Container>
             <ScrollView>
                 {
-                    todos.map((todo, index) => (
-                        <RowContainer key={index}>
-                            <RowText>{todo}</RowText>
+                    todos.map((todo) => (
+                        <RowContainer key={todo.key}>
+                            <RowText>{todo.description}</RowText>
                         </RowContainer>
                     ))
                 }

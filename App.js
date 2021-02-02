@@ -8,6 +8,7 @@ import DetailScreen from './DetailScreen';
 
 
 
+
 export default function App() {
 
   const Stack = createStackNavigator();
